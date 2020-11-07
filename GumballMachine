@@ -1,0 +1,69 @@
+//Global Variables
+//Sheets need to be stored as variables to allow the script to access data on the sheets. @gumballSheet and @valueSheet are the two sheets
+var gumballSheet = SpreadsheetApp.getActive().getSheetByName("gumball");
+var valueSheet = SpreadsheetApp.getActive().getSheetByName("ValuesForUse");
+
+//@numWhiteGumball and @numBlueGumball are two variables needed to store the count of gumballs. This is also stored on valueSheet as the variables do not store values between runs. As this
+//script will be ran over multiple days, the values need to be stored somewhere permanent 
+var numWhiteGumball, numBlueGumball;
+
+//@totalGumball and @gumballLeft are used to combine to get the total number used, and how many are left in the machine.
+var totalGumball = gumballSheet.getRange("O6").getValue() + gumballSheet.getRange("O7").getValue();
+var gumballLeft = valueSheet.getRange("O6").getValue();
+
+//Currently defined @reward that the user has typed into V6 on the gumballSheet.
+var reward = gumballSheet.getRange("V6").getValue()
+
+//Main function to refill the Gumball Machine
+//This will get the values that the user has typed in to O6 and O7 on the gumballSheet
+function resetGumballMachine() {
+
+    //deprecated code
+    //set Gumballs Left to 0
+    //valueSheet.getRange("B3").setValue('0');
+    //get gumball values
+
+    //Get the values that the user has inputted for each color
+    numWhiteGumball = gumballSheet.getRange("O6").getValue();
+    numBlueGumball = gumballSheet.getRange("O7").getValue();
+
+    //Verify the total gumballs are under 100
+    if (totalGumball > 100) {
+        var ui = SpreadsheetApp.getUi();
+        var temp = ui.alert("Gumball total exceeds 100. Please re-enter amounts.");
+    }
+    //If they are under 100, update the values across the spreadsheet (Normally you'd store in variables, but this will be over multiple days where the sheet will be closed and reopened)
+    else {
+        valueSheet.getRange("B1").setValue(numWhiteGumball);
+        valueSheet.getRange("B2").setValue(numBlueGumball);
+        //valueSheet.getRange("B3").setValue(totalGumball); (deprecated in place of a sheet value)
+    }
+}
+
+//Function to return a gumball at 'random'
+function getGumball() {
+    var ui = SpreadsheetApp.getUi();
+
+    //dispense a gumball based on freq. Math.Random() will return a value between 0 and 1. If we take that value and compare it to the freq at which a specific color should be chosen,
+    //we can determine which color is picked. EX: if .2233 is returned by Math.random() and the current freq. of a blue is 15%, then we know a white gumball should be picked. if Math.random() returns
+    //a value under .15, then a blue gumbal is picked. This is modified by the count of the color divided by the total of all gumballs.
+    var rand = Math.random();
+
+    var blueFreq = valueSheet.getRange("B8").getValue(); //Ex: this is .2
+    if (rand <= blueFreq) {
+        gumballColor = "blue";
+    } else {
+        gumballColor = "white";
+    }
+
+    //tell the user and remove that type of gumball
+    if (gumballColor == 'white') {
+        ui.alert("You receive a white gumball.");
+        numWhiteGumball = valueSheet.getRange("B1").getValue();
+        valueSheet.getRange("B1").setValue(numWhiteGumball - 1);
+    } else {
+        ui.alert("You got a Blue gumball! Celebrate with: " + reward);
+        numBlueGumball = valueSheet.getRange("B2").getValue();
+        valueSheet.getRange("B2").setValue(numBlueGumball - 1);
+    }
+}
